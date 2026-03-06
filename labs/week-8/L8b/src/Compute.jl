@@ -66,3 +66,28 @@ function run_deterministic_attention(X::Matrix{Float32}, s₀::Vector{Float32},
     end
     return s;
 end
+
+"""
+    run_stochastic_attention_trajectory(X, s₀, β, η, T; seed) -> Matrix{Float32}
+
+Run `T` steps of the stochastic attention update and return the full trajectory.
+Returns an `N × (T+1)` matrix where column `t` is the state at step `t-1` (column 1 is the initial state).
+"""
+function run_stochastic_attention_trajectory(X::Matrix{Float32}, s₀::Vector{Float32},
+    β::Float64, η::Float64, T::Int; seed::Union{Int,Nothing} = nothing)::Matrix{Float32}
+
+    if seed !== nothing
+        Random.seed!(seed);
+    end
+
+    N = length(s₀);
+    trajectory = Array{Float32,2}(undef, N, T + 1);
+    trajectory[:, 1] = s₀;
+
+    s = copy(s₀);
+    for t in 1:T
+        s = stochastic_attention_update(X, s, β, η);
+        trajectory[:, t + 1] = s;
+    end
+    return trajectory;
+end
