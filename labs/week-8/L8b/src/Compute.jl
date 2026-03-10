@@ -68,6 +68,38 @@ function run_deterministic_attention(X::Matrix{Float32}, s₀::Vector{Float32},
 end
 
 """
+    run_stochastic_attention_averaged(X, s₀, β, η, T_burn, T_sample; seed) -> Vector{Float64}
+
+Run `T_burn` steps of the stochastic attention update (burn-in, discarded), then run
+`T_sample` additional steps and return the time-averaged attention weight vector
+p̄ = (1/T_sample) Σ softmax(β X⊤ sᵗ). Averaging over the stationary distribution
+reduces variance and gives a stable basis for classification.
+"""
+function run_stochastic_attention_averaged(X::Matrix{Float32}, s₀::Vector{Float32},
+    β::Float64, η::Float64, T_burn::Int, T_sample::Int;
+    seed::Union{Int,Nothing} = nothing)::Vector{Float64}
+
+    if seed !== nothing
+        Random.seed!(seed);
+    end
+
+    # burn-in: run to stationarity, discard states
+    s = copy(s₀);
+    for _ in 1:T_burn
+        s = stochastic_attention_update(X, s, β, η);
+    end
+
+    # sampling: accumulate time-averaged attention weights
+    p_accum = zeros(Float64, size(X, 2));
+    for _ in 1:T_sample
+        s = stochastic_attention_update(X, s, β, η);
+        p_accum .+= softmax(β .* (transpose(X) * s));
+    end
+
+    return p_accum ./ T_sample;
+end
+
+"""
     run_stochastic_attention_trajectory(X, s₀, β, η, T; seed) -> Matrix{Float32}
 
 Run `T` steps of the stochastic attention update and return the full trajectory.
