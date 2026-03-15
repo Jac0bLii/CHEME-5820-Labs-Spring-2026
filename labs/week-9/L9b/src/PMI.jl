@@ -1,3 +1,18 @@
+"""
+    build_cooccurrence_matrix(sentences, vocabulary; window_size=2) -> Array{Int64,2}
+
+Build a symmetric word co-occurrence count matrix from a corpus.
+
+For each word at position `i` in a sentence, all words within `window_size`
+positions on either side contribute one count to entry `[w_idx, ctx_idx]`.
+The matrix has size `vocab_size × vocab_size`. Unknown tokens are mapped to
+`<unk>` if present in `vocabulary` and ignored otherwise.
+
+# Arguments
+- `sentences::Array{String,1}`: raw sentences; each sentence is lowercased and split on whitespace.
+- `vocabulary::Dict{String,Int64}`: mapping from token to 1-based vocabulary index.
+- `window_size::Int64`: half-width of the context window (default: 2).
+"""
 function build_cooccurrence_matrix(sentences::Array{String,1}, vocabulary::Dict{String,Int64}; window_size::Int64=2)::Array{Int64,2}
     vocab_size = length(vocabulary)
     cooccurrence = zeros(Int64, vocab_size, vocab_size)
@@ -24,6 +39,21 @@ function build_cooccurrence_matrix(sentences::Array{String,1}, vocabulary::Dict{
     return cooccurrence
 end
 
+"""
+    build_pmi_matrices(cooccurrence_matrix) -> (pmi_matrix, ppmi_matrix)
+
+Compute the Pointwise Mutual Information (PMI) and Positive PMI (PPMI) matrices
+from a co-occurrence count matrix.
+
+PMI is defined as `log2(P(w, c) / (P(w) * P(c)))`, where joint and marginal
+probabilities are estimated from `cooccurrence_matrix`. Entries with zero joint
+count are set to `-Inf`. PPMI clamps negative PMI values to zero. Both output
+matrices have the same size as the input (`vocab_size × vocab_size`).
+Returns `(zeros, zeros)` matrices if the total co-occurrence count is zero.
+
+# Arguments
+- `cooccurrence_matrix::Array{Int64,2}`: symmetric count matrix from `build_cooccurrence_matrix`.
+"""
 function build_pmi_matrices(cooccurrence_matrix::Array{Int64,2})
     vocab_size = size(cooccurrence_matrix, 1)
     total = sum(cooccurrence_matrix)

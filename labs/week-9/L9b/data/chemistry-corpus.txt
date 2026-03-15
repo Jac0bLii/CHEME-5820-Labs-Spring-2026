@@ -1,0 +1,40 @@
+an acid donates a proton to a base during neutralization
+a base accepts a proton from an acid during neutralization
+strong acids and strong bases fully dissociate in aqueous solution
+weak acids partially dissociate in solution unlike strong acids
+neutralizing an acid with a base produces a salt and water
+a buffer resists ph changes by neutralizing added acid or added base
+the ph of a solution decreases when acid is added
+the ph of a solution increases when base is added
+oxidation is the loss of electrons during a redox reaction
+reduction is the gain of electrons during a redox reaction
+in a redox reaction oxidation and reduction always occur together
+an oxidizing agent accepts electrons and is itself reduced
+a reducing agent donates electrons and is itself oxidized
+electrochemical cells drive redox reactions to produce electrical energy
+the oxidation state of an element changes during a redox reaction
+an exothermic reaction releases heat to the surroundings
+an endothermic reaction absorbs heat from the surroundings
+enthalpy change is negative for exothermic reactions
+enthalpy change is positive for endothermic reactions
+combustion is an exothermic process that releases heat to the surroundings
+dissolving ammonium nitrate is an endothermic process that absorbs heat
+spontaneous reactions release free energy to the surroundings
+entropy increases in spontaneous processes in an isolated system
+a solid has a fixed shape and volume with tightly packed molecules
+a liquid has a fixed volume but takes the shape of its container
+a gas expands to fill its container with no fixed shape or volume
+melting converts a solid to a liquid by adding heat
+boiling converts a liquid to a gas by adding heat
+freezing converts a liquid to a solid by removing heat
+condensation converts a gas to a liquid by removing heat
+the melting point is the temperature at which a solid becomes a liquid
+the boiling point is the temperature at which a liquid becomes a gas
+a catalyst increases the reaction rate by lowering the activation energy
+the activation energy is the minimum energy required to start a reaction
+reaction rate increases with temperature for most chemical reactions
+a higher concentration of reactants increases the reaction rate
+enzymes are biological catalysts that lower activation energy in cells
+chemical equilibrium occurs when the forward and reverse reaction rates are equal
+increasing temperature shifts equilibrium toward the endothermic direction
+increasing pressure shifts equilibrium toward the side with fewer gas molecules

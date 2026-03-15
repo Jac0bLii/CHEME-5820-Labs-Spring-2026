@@ -1,3 +1,18 @@
+"""
+    build_cbow_pairs(sentences, vocabulary; window_size=2) -> Vector
+
+Build context–target training pairs from a tokenized corpus for CBOW training.
+
+For each target word at position `i` in a sentence, the context is the sum of
+one-hot vocabulary vectors for all words within `window_size` positions on either
+side of `i`. Returns a vector of `(context_sum, target)` tuples where both
+`context_sum` and `target` are `Float64` vectors of length `|vocabulary|`.
+
+# Arguments
+- `sentences::Array{String,1}`: raw sentences; each sentence is lowercased and split on whitespace.
+- `vocabulary::Dict{String,Int64}`: mapping from token to 1-based vocabulary index.
+- `window_size::Int64`: half-width of the context window (default: 2).
+"""
 function build_cbow_pairs(sentences::Array{String,1}, vocabulary::Dict{String,Int64}; window_size::Int64=2)
     vocab_size = length(vocabulary)
     training_pairs = []
@@ -31,6 +46,28 @@ function build_cbow_pairs(sentences::Array{String,1}, vocabulary::Dict{String,In
     return training_pairs
 end
 
+"""
+    train_cbow(training_pairs, vocab_size; d_h=5, eta=0.01, num_epochs=500) -> (W1, W2, loss_history)
+
+Train a CBOW model on `training_pairs` using stochastic gradient descent.
+
+The model has a single hidden layer of size `d_h`. The input weight matrix
+`W1 ∈ ℝ^{d_h × vocab_size}` maps context vectors to the hidden layer, and
+`W2 ∈ ℝ^{vocab_size × d_h}` maps the hidden layer to the output distribution.
+Training minimizes cross-entropy loss with a softmax output.
+
+# Arguments
+- `training_pairs`: vector of `(context_sum, target)` tuples produced by `build_cbow_pairs`.
+- `vocab_size::Int64`: number of tokens in the vocabulary.
+- `d_h::Int64`: embedding (hidden layer) dimension (default: 5).
+- `eta::Float64`: SGD learning rate (default: 0.01).
+- `num_epochs::Int64`: number of full passes over `training_pairs` (default: 500).
+
+# Returns
+- `W1::Matrix{Float64}`: input weight matrix of size `d_h × vocab_size`; columns are word embeddings.
+- `W2::Matrix{Float64}`: output weight matrix of size `vocab_size × d_h`.
+- `loss_history::Vector{Float64}`: average cross-entropy loss per epoch.
+"""
 function train_cbow(training_pairs, vocab_size::Int64; d_h::Int64=5, eta::Float64=0.01, num_epochs::Int64=500)
     W1 = randn(d_h, vocab_size) * 0.01
     W2 = randn(vocab_size, d_h) * 0.01
@@ -56,6 +93,21 @@ function train_cbow(training_pairs, vocab_size::Int64; d_h::Int64=5, eta::Float6
     return W1, W2, loss_history
 end
 
+"""
+    nearest_neighbors(W1, vocabulary, word; top_k=5) -> Vector{Tuple{String,Float64}}
+
+Return the `top_k` vocabulary words most similar to `word` by cosine similarity.
+
+Similarity is computed between the embedding of `word` (column `vocabulary[word]`
+of `W1`) and every other column of `W1`. The query word itself is excluded from
+the results. Returns an empty vector if `word` is not in `vocabulary`.
+
+# Arguments
+- `W1::Matrix{Float64}`: input weight matrix of size `d_h × vocab_size` from `train_cbow`.
+- `vocabulary::Dict{String,Int64}`: mapping from token to 1-based vocabulary index.
+- `word::String`: query word.
+- `top_k::Int`: number of nearest neighbors to return (default: 5).
+"""
 function nearest_neighbors(W1::Matrix{Float64}, vocabulary::Dict{String,Int64},
                             word::String; top_k::Int=5)
     idx = get(vocabulary, word, 0)
@@ -79,6 +131,23 @@ function nearest_neighbors(W1::Matrix{Float64}, vocabulary::Dict{String,Int64},
     return [(inv_vocab[i], round(sims[i]; digits=4)) for i in top_indices]
 end
 
+"""
+    solve_analogy(W1, vocabulary, word_a, word_b, word_c; top_k=5, exclude_inputs=true) -> Vector{Tuple{String,Float64}}
+
+Solve the word analogy `word_a : word_b :: word_c : ?` using the vector offset method.
+
+Computes the target vector `v_b - v_a + v_c` and returns the `top_k` vocabulary
+words whose embeddings have the highest cosine similarity to that target. The three
+input words are excluded from the candidate set when `exclude_inputs=true`.
+Returns an empty vector if any input word is missing from `vocabulary`.
+
+# Arguments
+- `W1::Matrix{Float64}`: input weight matrix of size `d_h × vocab_size` from `train_cbow`.
+- `vocabulary::Dict{String,Int64}`: mapping from token to 1-based vocabulary index.
+- `word_a::String`, `word_b::String`, `word_c::String`: the three input words of the analogy.
+- `top_k::Int`: number of candidate answers to return (default: 5).
+- `exclude_inputs::Bool`: whether to exclude `word_a`, `word_b`, `word_c` from results (default: true).
+"""
 function solve_analogy(W1::Matrix{Float64}, vocabulary::Dict{String,Int64},
                        word_a::String, word_b::String, word_c::String;
                        top_k::Int=5, exclude_inputs::Bool=true)

@@ -1,3 +1,16 @@
+"""
+    build_tf_matrix(bow_matrix) -> Array{Float64,2}
+
+Compute the term frequency (TF) matrix from a bag-of-words count matrix.
+
+Each entry `tf[i, j]` is the relative frequency of token `j` in sentence `i`:
+`tf[i, j] = bow_matrix[i, j] / sum(bow_matrix[i, :])`. Rows with zero total
+count are left as all zeros.
+
+# Arguments
+- `bow_matrix::Array{Int64,2}`: count matrix of size `num_sentences × vocab_size`
+  produced by `build_bow_matrix`.
+"""
 function build_tf_matrix(bow_matrix::Array{Int64,2})::Array{Float64,2}
     num_sentences, vocab_size = size(bow_matrix)
     tf_matrix = zeros(Float64, num_sentences, vocab_size)
@@ -10,6 +23,20 @@ function build_tf_matrix(bow_matrix::Array{Int64,2})::Array{Float64,2}
     return tf_matrix
 end
 
+"""
+    build_idf_dictionary(bow_matrix, vocabulary, num_sentences) -> Dict{String,Float64}
+
+Compute the inverse document frequency (IDF) for each vocabulary token.
+
+Uses smoothed IDF: `idf(w) = log((num_sentences + 1) / (df(w) + 1))`, where
+`df(w)` is the number of sentences in which token `w` appears at least once.
+The smoothing prevents division by zero for tokens not seen during fitting.
+
+# Arguments
+- `bow_matrix::Array{Int64,2}`: count matrix of size `num_sentences × vocab_size`.
+- `vocabulary::Dict{String,Int64}`: mapping from token to 1-based vocabulary index.
+- `num_sentences::Int64`: total number of sentences in the corpus.
+"""
 function build_idf_dictionary(bow_matrix::Array{Int64,2}, vocabulary::Dict{String,Int64}, num_sentences::Int64)::Dict{String,Float64}
     idf_dict = Dict{String, Float64}()
     inverse_vocab = Dict{Int64, String}(v => k for (k, v) in vocabulary)
@@ -22,6 +49,19 @@ function build_idf_dictionary(bow_matrix::Array{Int64,2}, vocabulary::Dict{Strin
     return idf_dict
 end
 
+"""
+    build_tfidf_matrix(tf_matrix, idf_dict, inverse_vocabulary) -> Array{Float64,2}
+
+Compute the TF-IDF matrix by element-wise multiplication of TF and IDF values.
+
+Each entry `tfidf[i, j] = tf_matrix[i, j] * idf_dict[token_j]`. Tokens absent
+from `idf_dict` are assigned an IDF of 0.
+
+# Arguments
+- `tf_matrix::Array{Float64,2}`: term frequency matrix from `build_tf_matrix`.
+- `idf_dict::Dict{String,Float64}`: IDF values from `build_idf_dictionary`.
+- `inverse_vocabulary::Dict{Int64,String}`: mapping from 1-based index to token string.
+"""
 function build_tfidf_matrix(tf_matrix::Array{Float64,2}, idf_dict::Dict{String,Float64}, inverse_vocabulary::Dict{Int64,String})::Array{Float64,2}
     num_sentences, vocab_size = size(tf_matrix)
     tfidf_matrix = zeros(Float64, num_sentences, vocab_size)
