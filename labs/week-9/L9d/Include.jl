@@ -1,3 +1,15 @@
+# setup paths -
+const _ROOT = pwd();
+const _PATH_TO_DATA = joinpath(_ROOT, "data");
+const _PATH_TO_SRC = joinpath(_ROOT, "src");
+
+# check do we have a Manifest.toml file?
+using Pkg;
+if (isfile(joinpath(_ROOT, "Manifest.toml")) == false) # have manifest file, we are good. Otherwise, we need to instantiate the environment
+     Pkg.add(path="https://github.com/varnerlab/VLDataScienceMachineLearningPackage.jl.git")
+    Pkg.activate("."); Pkg.resolve(); Pkg.instantiate(); Pkg.update();
+end
+
 using VLDataScienceMachineLearningPackage
 using Statistics
 using JLD2
@@ -10,9 +22,9 @@ using PrettyTables
 using DataFrames
 using StatsBase
 using Random
-using IJulia
 
-include(joinpath(@__DIR__, "src", "BagOfWords.jl"))
-include(joinpath(@__DIR__, "src", "CBOW.jl"))
-include(joinpath(@__DIR__, "src", "SkipGram.jl"))
-include(joinpath(@__DIR__, "src", "NegativeSampling.jl"))
+# include my codes -
+include(joinpath(_PATH_TO_SRC, "BagOfWords.jl"));
+include(joinpath(_PATH_TO_SRC, "CBOW.jl"));
+include(joinpath(_PATH_TO_SRC, "SkipGram.jl"));
+include(joinpath(_PATH_TO_SRC, "NegativeSampling.jl"));

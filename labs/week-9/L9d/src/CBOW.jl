@@ -27,7 +27,10 @@ function build_cbow_pairs(sentences::Array{String,1}, vocabulary::Dict{String,In
     return training_pairs
 end
 
-function train_cbow(training_pairs, vocab_size::Int64; d_h::Int64=5, eta::Float64=0.01, num_epochs::Int64=500)
+function train_cbow(training_pairs, vocab_size::Int64;
+    d_h::Int64=5, eta::Float64=0.01, num_epochs::Int64=500,
+    verbose::Bool=true, print_every::Int64=100)
+
     W1 = randn(d_h, vocab_size) * 0.01
     W2 = randn(vocab_size, d_h) * 0.01
     loss_history = zeros(Float64, num_epochs)
@@ -45,6 +48,9 @@ function train_cbow(training_pairs, vocab_size::Int64; d_h::Int64=5, eta::Float6
             W1 .-= eta .* (W2' * delta_u * x')
         end
         loss_history[epoch] = total_loss / length(training_pairs)
+        if verbose && (epoch % print_every == 0 || epoch == 1)
+            println("Epoch $(lpad(epoch, ndigits(num_epochs)))/$(num_epochs)  loss = $(round(loss_history[epoch]; digits=4))");
+        end
     end
     return W1, W2, loss_history
 end
