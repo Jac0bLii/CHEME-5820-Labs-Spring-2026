@@ -10,7 +10,6 @@ if (isfile(joinpath(_ROOT, "Manifest.toml")) == false) # have manifest file, we 
 end
 
 # using statements -
-using VLDataScienceMachineLearningPackage
 using HockinMannModel
 using Statistics
 using Random
@@ -21,7 +20,6 @@ using NNlib
 using Flux
 using PrettyTables
 using DataFrames
-using IJulia
 
 # load source files -
 include(joinpath(_PATH_TO_SRC, "Simulation.jl"));
