@@ -38,12 +38,19 @@ Initialize an Elman RNN with Xavier-scaled random weights and zero biases.
 """
 function build_elman_rnn(d_in::Int, h::Int, d_out::Int; seed::Int = 42)::MyElmanRNNModel
 
+    # use a seeded RNG so two calls with the same seed return identical weights -
+    # this makes training reproducible across notebook runs -
     rng = Random.MersenneTwister(seed);
 
-    # Xavier initialization: scale ~ sqrt(2 / (fan_in + fan_out)) -
-    U = randn(rng, h, h) .* sqrt(2.0 / (h + h));
-    W = randn(rng, h, d_in) .* sqrt(2.0 / (h + d_in));
-    V = randn(rng, d_out, h) .* sqrt(2.0 / (d_out + h));
+    # Xavier (Glorot) initialization: draw weights from a normal distribution
+    # with variance 2 / (fan_in + fan_out). this scaling keeps the variance of
+    # activations roughly constant as signals flow forward through the layer,
+    # which avoids both vanishing and exploding activations at the start of training -
+    U = randn(rng, h, h) .* sqrt(2.0 / (h + h));         # recurrent weights: h_{t-1} -> h_t
+    W = randn(rng, h, d_in) .* sqrt(2.0 / (h + d_in));   # input weights: x_t -> h_t
+    V = randn(rng, d_out, h) .* sqrt(2.0 / (d_out + h)); # output weights: h_t -> y_t
+
+    # initialize biases to zero (a standard, neutral starting point) -
     bh = zeros(Float64, h);
     by = zeros(Float64, d_out);
 
@@ -138,16 +145,33 @@ the model feeds its own predictions back as input at each time step.
 function predict_sequence(model::MyElmanRNNModel, x_0::Float64, condition::Float64,
     T::Int)::Vector{Float64}
 
-    # initialize -
+    # allocate the output sequence and seed the first entry with the true x_0 -
+    # we always start the rollout from a known initial value (taken from the data),
+    # so the model only has to predict steps 2 through T -
     predictions = zeros(Float64, T);
     predictions[1] = x_0;
+
+    # start with a zero hidden state, matching the convention used during training -
     h_t = zeros(Float64, length(model.bh));
+
+    # x_current tracks the most recent value we will feed back into the model.
+    # this is the key difference from teacher forcing: in training the next input
+    # comes from the dataset, here it comes from the model's own previous prediction -
     x_current = x_0;
 
-    # autoregressive rollout -
+    # autoregressive rollout: at each step, build the input vector from
+    # (previous prediction, condition), advance the RNN one step, and append -
     for t in 1:(T - 1)
+
+        # concatenate the latest scalar prediction with the (constant) condition,
+        # producing the 2-vector x_t = [x_current; c] expected by forward_step -
         x_t = [x_current; condition];
+
+        # one Elman step: returns the next output and the updated hidden state -
         y_t, h_t = forward_step(model, x_t, h_t);
+
+        # the model's scalar prediction becomes the input for the next iteration.
+        # any error here propagates into x_current and compounds over the rollout -
         x_current = y_t[1];
         predictions[t + 1] = x_current;
     end
