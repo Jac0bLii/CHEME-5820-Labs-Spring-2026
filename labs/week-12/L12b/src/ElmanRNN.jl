@@ -84,6 +84,7 @@ function forward_step(model::MyElmanRNNModel, x_t::Vector{Float64},
     # out-of-range predictions, so small errors compound immediately during autoregressive rollout.
     y_t = NNlib.sigmoid.(model.V * h_t .+ model.by);
 
+    # return both the output and the new hidden state -
     return (y_t, h_t)
 end
 
@@ -161,7 +162,7 @@ function predict_sequence(model::MyElmanRNNModel, x_0::Float64, condition::Float
 
     # autoregressive rollout: at each step, build the input vector from
     # (previous prediction, condition), advance the RNN one step, and append -
-    for t in 1:(T - 1)
+    for t ∈ 1:(T - 1)
 
         # concatenate the latest scalar prediction with the (constant) condition,
         # producing the 2-vector x_t = [x_current; c] expected by forward_step -
